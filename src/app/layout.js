@@ -27,6 +27,7 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${outfit.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
       <body 
         className="min-h-full flex flex-col bg-slate-950 text-slate-50"

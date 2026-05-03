@@ -70,8 +70,8 @@ export default function ItemDetailPage() {
   };
 
   const totalPrice = item.price + selectedAddons.reduce((acc, name) => {
-    const addon = item.addons.find(a => a.name === name);
-    return acc + (addon ? addon.price : 0);
+    const addon = addons.find(a => a.name === name);
+    return acc + (addon ? parseFloat(addon.price) : 0);
   }, 0);
 
   const whatsappMessage = `Hi! I'm interested in renting the ${item.name}. ${
@@ -116,7 +116,7 @@ export default function ItemDetailPage() {
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">{item.name}</h1>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white">${totalPrice}</span>
+                <span className="text-3xl font-bold text-white">LKR {totalPrice}</span>
                 <span className="text-slate-500">per day</span>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function ItemDetailPage() {
                         </div>
                         <span className="font-medium text-sm">{addon.name}</span>
                       </div>
-                      <span className="text-xs">+${addon.price}/day</span>
+                      <span className="text-xs">+LKR {addon.price}/day</span>
                     </button>
                   ))}
                 </div>

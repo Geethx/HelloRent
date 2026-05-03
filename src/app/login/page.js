@@ -17,16 +17,21 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      window.location.href = "/admin"; // Use hard redirect to ensure session sync
     } else {
-      router.push("/admin");
+      setLoading(false);
     }
   };
 

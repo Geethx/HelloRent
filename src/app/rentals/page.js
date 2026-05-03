@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,8 @@ import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
 
 export default function RentalsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,43 +19,52 @@ export default function RentalsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    // Read ?category= from URL to pre-select
+    const catParam = searchParams.get("category");
+    if (catParam) {
+      setSelectedCategory(catParam);
+    }
     fetchData();
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     // Fetch Categories
-    const { data: catData } = await supabase.from('categories').select('*');
+    const { data: catData } = await supabase.from("categories").select("*");
     setCategories(catData || []);
 
     // Fetch Items
-    const { data: itemData } = await supabase.from('items').select('*');
+    const { data: itemData } = await supabase.from("items").select("*");
     setItems(itemData || []);
-    
+
     setLoading(false);
   };
 
-  const filteredItems = items.filter(item => {
-    // If selectedCategory is "all", we show all. 
-    // Otherwise, we match the category_id from the selected category slug/id
-    const categoryMatch = selectedCategory === "all" || 
-      categories.find(c => c.slug === selectedCategory)?.id === item.category_id;
-    
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredItems = items.filter((item) => {
+    const categoryMatch =
+      selectedCategory === "all" ||
+      categories.find((c) => c.slug === selectedCategory)?.id ===
+        item.category_id;
+
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     return categoryMatch && matchesSearch;
   });
 
   return (
     <div className="min-h-screen bg-slate-950">
       <Navbar />
-      
+
       <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Our <span className="gold-gradient-text">Fleet</span></h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            Our <span className="gold-gradient-text">Fleet</span>
+          </h1>
           <p className="text-slate-400 max-w-xl font-sans">
-            Browse our curated selection of scooters, apartments, and vehicles. 
+            Browse our curated selection of scooters, apartments, and vehicles.
             Everything is maintained to the highest standards.
           </p>
         </div>
@@ -63,21 +75,21 @@ export default function RentalsPage() {
             <button
               onClick={() => setSelectedCategory("all")}
               className={`px-6 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
-                selectedCategory === "all" 
-                ? "bg-amber-500 text-slate-950" 
-                : "bg-white/5 text-slate-400 hover:bg-white/10"
+                selectedCategory === "all"
+                  ? "bg-amber-500 text-slate-950"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10"
               }`}
             >
               All Items
             </button>
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => setSelectedCategory(cat.slug)}
                 className={`px-6 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
-                  selectedCategory === cat.id 
-                  ? "bg-amber-500 text-slate-950" 
-                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+                  selectedCategory === cat.slug
+                    ? "bg-amber-500 text-slate-950"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10"
                 }`}
               >
                 {cat.name}
@@ -86,7 +98,10 @@ export default function RentalsPage() {
           </div>
 
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              size={18}
+            />
             <input
               type="text"
               placeholder="Search fleet..."
@@ -102,10 +117,12 @@ export default function RentalsPage() {
           {loading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4">
               <Loader2 className="w-12 h-12 text-amber-500 animate-spin" />
-              <p className="text-slate-500 animate-pulse">Fetching paradise fleet...</p>
+              <p className="text-slate-500 animate-pulse">
+                Fetching paradise fleet...
+              </p>
             </div>
           ) : (
-            <AnimatePresence mode='popLayout'>
+            <AnimatePresence mode="popLayout">
               {filteredItems.map((item) => (
                 <motion.div
                   layout
@@ -113,7 +130,8 @@ export default function RentalsPage() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="glass-card overflow-hidden group"
+                  onClick={() => router.push(`/rentals/${item.id}`)}
+                  className="glass-card overflow-hidden group cursor-pointer"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <Image
@@ -124,10 +142,13 @@ export default function RentalsPage() {
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute top-4 right-4 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-lg text-amber-400 font-bold text-sm">
-                      ${item.price}<span className="text-[10px] text-slate-400 ml-1">/ day</span>
+                      LKR {item.price}
+                      <span className="text-[10px] text-slate-400 ml-1">
+                        / day
+                      </span>
                     </div>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="text-[10px] uppercase tracking-widest text-amber-500 font-bold mb-2">
                       {item.sub_category}
@@ -136,17 +157,11 @@ export default function RentalsPage() {
                     <p className="text-slate-400 text-sm mb-6 line-clamp-2 font-sans">
                       {item.description}
                     </p>
-                    
+
                     <div className="flex items-center justify-between">
-                      <Link 
-                        href={`/rentals/${item.id}`}
-                        className="text-sm font-bold text-white hover:text-amber-400 transition-colors"
-                      >
+                      <span className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
                         View Details
-                      </Link>
-                      <button className="bg-white/5 hover:bg-amber-500 hover:text-slate-950 p-2.5 rounded-full transition-all">
-                        <Search size={18} />
-                      </button>
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -157,7 +172,9 @@ export default function RentalsPage() {
 
         {!loading && filteredItems.length === 0 && (
           <div className="text-center py-24">
-            <p className="text-slate-500 italic">No items found matching your criteria.</p>
+            <p className="text-slate-500 italic">
+              No items found matching your criteria.
+            </p>
           </div>
         )}
       </main>

@@ -5,7 +5,10 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { CheckCircle, Clock, Calendar, Phone, Plus, Package, LogOut, Loader2 } from "lucide-react";
+import { 
+  Loader2, Box, Plus, Settings, Clock, CheckCircle, Calendar, 
+  Phone, Trash2, ArrowLeft, XCircle, LogOut, Package
+} from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboard() {
@@ -15,18 +18,8 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    checkUser();
     fetchBookings();
   }, []);
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-    } else {
-      setUser(user);
-    }
-  };
 
   const fetchBookings = async () => {
     const { data } = await supabase
@@ -37,41 +30,45 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const updateBookingStatus = async (id, status) => {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status })
+      .eq('id', id);
+    
+    if (error) alert(error.message);
+    else fetchBookings();
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center" suppressHydrationWarning>
       <Loader2 className="animate-spin text-amber-500" size={32} />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans">
-      <Navbar />
+    <div className="min-h-screen bg-slate-950 font-sans" suppressHydrationWarning>
       
-      <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+      <main className="pt-10 pb-24 px-6 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-4xl font-bold mb-2 text-white">Admin <span className="text-amber-500">Dashboard</span></h1>
-            <p className="text-slate-500 text-sm">Welcome back, {user?.email}</p>
+            <h1 className="text-3xl font-bold text-white">Admin <span className="text-amber-500">Dashboard</span></h1>
+            <p className="text-slate-500 text-sm mt-1">Welcome back, {user?.email}</p>
           </div>
-          <div className="flex gap-4">
-            <button 
-              onClick={handleLogout}
-              className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-500/20 transition-all flex items-center gap-2"
-            >
-              <LogOut size={16} /> Logout
-            </button>
-            <Link 
-              href="/admin/inventory"
-              className="btn-premium px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            >
-              <Package size={16} /> Manage Inventory
-            </Link>
-          </div>
+          <button 
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="bg-white/5 border border-white/10 text-slate-400 px-6 py-2 rounded-xl text-sm font-bold hover:bg-red-500/10 hover:text-red-500 transition-all flex items-center gap-2"
+          >
+            <LogOut size={18} /> Logout
+          </button>
         </div>
 
         {/* Stats Grid */}
@@ -97,12 +94,45 @@ export default function AdminDashboard() {
           <div className="glass-card p-6 flex items-center justify-between">
             <div>
               <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Revenue</div>
-              <div className="text-2xl font-bold">${bookings.reduce((acc, curr) => acc + (curr.total_price || 0), 0)}</div>
+              <div className="text-2xl font-bold">LKR {bookings.reduce((acc, curr) => acc + (curr.total_price || 0), 0)}</div>
             </div>
             <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500">
               <Calendar size={24} />
             </div>
           </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <Link href="/admin/inventory" className="glass-card p-6 flex items-center gap-4 hover:border-amber-500/50 transition-all group">
+              <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Box size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Manage Fleet</h3>
+                <p className="text-xs text-slate-500">Add or edit vehicles and rooms</p>
+              </div>
+            </Link>
+
+            <Link href="/admin/addons" className="glass-card p-6 flex items-center gap-4 hover:border-amber-500/50 transition-all group">
+              <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Plus size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Manage Addons</h3>
+                <p className="text-xs text-slate-500">Edit prices for Surf Racks, Helmets, etc.</p>
+              </div>
+            </Link>
+
+            <div className="glass-card p-6 flex items-center gap-4 border-white/5 opacity-50">
+              <div className="w-12 h-12 bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center">
+                <Settings size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Settings</h3>
+                <p className="text-xs text-slate-500">Coming soon</p>
+              </div>
+            </div>
         </div>
 
         {/* Bookings Table */}
@@ -119,6 +149,7 @@ export default function AdminDashboard() {
                   <th className="px-6 py-4">Dates</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Total</th>
+                  <th className="px-6 py-4">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -134,12 +165,36 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 text-slate-400 text-xs">{bk.start_date} to {bk.end_date}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        bk.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                        bk.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 
+                        bk.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
+                        'bg-amber-500/10 text-amber-500'
                       }`}>
                         {bk.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-bold text-white">${bk.total_price}</td>
+                    <td className="px-6 py-4 font-bold text-white">LKR {bk.total_price}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        {bk.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => updateBookingStatus(bk.id, 'confirmed')}
+                              className="p-2 hover:bg-emerald-500/20 text-emerald-500 rounded-lg transition-all"
+                              title="Confirm Booking"
+                            >
+                              <CheckCircle size={18} />
+                            </button>
+                            <button 
+                              onClick={() => updateBookingStatus(bk.id, 'cancelled')}
+                              className="p-2 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
+                              title="Cancel Booking"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
-import { Bike, Home, Car, Navigation, Shield, Clock, Heart, Phone } from "lucide-react";
+import { Bike, Home, Car, Navigation, Shield, Clock, Heart, Phone, Package } from "lucide-react";
 
 export default function LandingPage() {
   const [categories, setCategories] = useState([]);
@@ -18,12 +19,39 @@ export default function LandingPage() {
     fetchCategories();
   }, []);
 
+  // Scroll to section after cross-page navigation
+  useEffect(() => {
+    const scrollToSection = (id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        // Use a slightly shorter timeout and check for existence
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    };
+
+    // 1. Check Session Storage (from previous implementation)
+    const storedSection = sessionStorage.getItem("scrollToSection");
+    if (storedSection) {
+      sessionStorage.removeItem("scrollToSection");
+      scrollToSection(storedSection);
+      return;
+    }
+
+    // 2. Check URL Hash (for router.push cases)
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      scrollToSection(hash);
+    }
+  }, []);
+
   return (
     <div className="relative overflow-hidden bg-slate-950">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center pt-20">
+      <section id="home" className="relative h-screen flex items-center justify-center pt-20">
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero.png"
@@ -51,12 +79,12 @@ export default function LandingPage() {
               with our well-maintained fleet and stay in curated local escapes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="btn-premium w-full sm:w-auto text-lg">
+              <Link href="#rentals" className="btn-premium w-full sm:w-auto text-lg text-center">
                 Explore Rentals
-              </button>
-              <button className="px-8 py-3 rounded-full font-semibold border border-white/20 hover:bg-white/10 transition-all">
+              </Link>
+              <Link href="#rooms" className="px-8 py-3 rounded-full font-semibold border border-white/20 hover:bg-white/10 transition-all text-white">
                 View Rooms
-              </button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -86,20 +114,18 @@ export default function LandingPage() {
             <div>
               <h2 className="text-3xl md:text-5xl font-bold mb-4">Our <span className="text-amber-400">Rentals</span></h2>
               <p className="text-slate-400 max-w-lg font-sans">
-                From two wheels to luxury villas, we provide everything you need for the perfect Sri Lankan adventure.
+                Explore our fleet of well-maintained vehicles. Perfect for short trips or long-term adventures across the island.
               </p>
             </div>
-            <div className="text-sm font-medium text-slate-500 border-b border-white/10 pb-2">
-              SCROLL TO EXPLORE
-            </div>
+            <Link href="/rentals" className="text-sm font-bold text-amber-500 border-b border-amber-500/20 pb-2 hover:text-amber-400 transition-all">
+              VIEW FULL FLEET →
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((cat, i) => {
-              // Helper to match icons and details to DB categories
+            {categories.filter(c => c.slug !== 'apartments').map((cat, i) => {
               const details = {
                 scooters: { icon: <Bike />, desc: "110cc & 125cc available", tag: "Popular" },
-                apartments: { icon: <Home />, desc: "Luxury & Budget stays", tag: "Best Value" },
                 tuktuks: { icon: <Navigation />, desc: "Local experience", tag: "Authentic" },
                 cars: { icon: <Car />, desc: "Travel in comfort", tag: "Premium" },
                 bicycles: { icon: <Bike />, desc: "Eco-friendly exploration", tag: "Leisure" },
@@ -136,19 +162,95 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Featured Rooms Section */}
+      <section id="rooms" className="py-24 relative px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-6xl font-bold mb-6">Stay in <span className="gold-gradient-text">Paradise</span></h2>
+            <p className="text-slate-400 max-w-2xl mx-auto font-sans text-lg">
+              Hand-picked local escapes. From beachside villas to mountain retreats, 
+              discover your home away from home.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="relative group">
+              <div className="aspect-[16/9] rounded-3xl overflow-hidden relative border border-white/10">
+                <Image src="/hero.png" alt="Featured Room" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Ocean View Suite</h3>
+                    <div className="flex items-center gap-4 text-xs text-slate-400 font-sans uppercase tracking-widest">
+                      <span>Wifi</span>
+                      <span>•</span>
+                      <span>Kitchen</span>
+                      <span>•</span>
+                      <span>AC</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-amber-500 font-bold text-lg">LKR 12,000</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase">per night</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col justify-center space-y-8 lg:pl-12">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold">Curated Local Experiences</h3>
+                <p className="text-slate-400 font-sans leading-relaxed">
+                  We don't just provide rooms; we provide experiences. Every stay in our collection 
+                  is vetted for quality, safety, and local authenticity.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6">
+                <div className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <Home size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm">Verified Hosts</h4>
+                    <p className="text-xs text-slate-500 mt-1">Direct support from local owners who know the area best.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm">Safe & Secure</h4>
+                    <p className="text-xs text-slate-500 mt-1">24/7 security and emergency assistance for every guest.</p>
+                  </div>
+                </div>
+              </div>
+
+              <Link href="/rentals?category=apartments" className="btn-premium py-4 text-center">
+                Browse All Rooms
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Why Us Section (About) */}
       <section id="about" className="py-24 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-              <Image 
-                src="/hero.png" 
-                alt="Local Experience" 
-                fill 
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126980.89289186143!2d80.30705860501475!3d5.973671296111597!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae115bc1dd20d9f%3A0xd2b6be823738f94a!2sHello%20-%20Rent!5e0!3m2!1sen!2slk!4v1777784649205!5m2!1sen!2slk"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Hello Rent Location"
+                className="absolute inset-0 w-full h-full"
               />
-              <div className="absolute inset-0 bg-amber-500/10 mix-blend-overlay"></div>
             </div>
             <div>
               <h2 className="text-3xl md:text-5xl font-bold mb-8">Why <span className="gold-gradient-text">Hello Rent</span>?</h2>
@@ -190,12 +292,12 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 border-t border-white/5 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-slate-500 text-sm">
-          <div>© 2024 HELLO RENT SRI LANKA. All rights reserved.</div>
-          <div className="flex gap-8">
+          <div>© 2026 HELLO RENT WELIGAMA. All rights reserved.</div>
+          {/* <div className="flex gap-8">
             <a href="#" className="hover:text-white transition-colors">Terms</a>
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="#" className="hover:text-white transition-colors">Instagram</a>
-          </div>
+          </div> */}
         </div>
       </footer>
     </div>
